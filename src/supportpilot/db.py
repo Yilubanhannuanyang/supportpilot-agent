@@ -1,12 +1,13 @@
 import sqlite3
+from pathlib import Path
 
 
-DB_PATH = "supportpilot.db"
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+DB_PATH = PROJECT_ROOT / "supportpilot.db"
 
 
-def init_db():
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
+def ensure_orders_schema(cursor: sqlite3.Cursor) -> None:
+    """Create the orders table and apply the one-time legacy column migration."""
 
     cursor.execute(
         """
@@ -21,12 +22,8 @@ def init_db():
         """
     )
 
-    # 兼容旧数据库：如果没有 hours_since_payment，就新增这一列
     cursor.execute("PRAGMA table_info(orders)")
-    columns = [
-        row[1]
-        for row in cursor.fetchall()
-    ]
+    columns = {row[1] for row in cursor.fetchall()}
 
     if "hours_since_payment" not in columns:
         cursor.execute(
@@ -36,35 +33,31 @@ def init_db():
             """
         )
 
-    cursor.execute("PRAGMA table_info(orders)")
-    columns = [
-    row[1]
-    for row in cursor.fetchall()
-]
 
-    if "hours_since_payment" not in columns:
-     cursor.execute(
-        """
-        ALTER TABLE orders
-        ADD COLUMN hours_since_payment INTEGER NOT NULL DEFAULT 0
-        """
-    )
+def ensure_tickets_schema(cursor: sqlite3.Cursor) -> None:
+    """Create the tickets table required by ticket tools and workflows."""
 
     cursor.execute(
         """
-        UPDATE orders
-        SET hours_since_payment = 30
-        WHERE order_id = 'A1002'
+        CREATE TABLE IF NOT EXISTS tickets (
+            ticket_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            order_id TEXT NOT NULL,
+            issue_type TEXT NOT NULL,
+            description TEXT NOT NULL,
+            status TEXT NOT NULL
+        )
         """
     )
 
-    cursor.execute(
-        """
-        UPDATE orders
-        SET hours_since_payment = 96
-        WHERE order_id = 'A1003'
-        """
-    )
+
+def init_db() -> None:
+    """Ensure schemas exist and seed the small deterministic demo dataset."""
+
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+
+    ensure_orders_schema(cursor)
+    ensure_tickets_schema(cursor)
 
     cursor.executemany(
         """
@@ -74,9 +67,10 @@ def init_db():
             product_name,
             payment_status,
             shipping_status,
-            estimated_delivery
+            estimated_delivery,
+            hours_since_payment
         )
-        VALUES (?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
         """,
         [
             (
@@ -86,6 +80,7 @@ def init_db():
                 "已付款",
                 "等待仓库发货",
                 "预计 2 天内发货",
+                72,
             ),
             (
                 "A1002",
@@ -94,6 +89,7 @@ def init_db():
                 "已付款",
                 "运输中",
                 "预计明天送达",
+                30,
             ),
             (
                 "A1003",
@@ -102,63 +98,19 @@ def init_db():
                 "已付款",
                 "已签收",
                 "已于昨日送达",
+                96,
+            ),
+            (
+                "A1004",
+                "赵六",
+                "智能手环",
+                "已付款",
+                "等待仓库发货",
+                "预计尽快发货",
+                60,
             ),
         ],
     )
-
-    cursor.execute(
-    """
-    INSERT OR IGNORE INTO orders (
-        order_id,
-        customer_name,
-        product_name,
-        payment_status,
-        shipping_status,
-        estimated_delivery
-    )
-    VALUES (?, ?, ?, ?, ?, ?)
-    """,
-    (
-        "A1004",
-        "赵六",
-        "智能手环",
-        "已付款",
-        "等待仓库发货",
-        "预计尽快发货",
-    ),
-)
-    
-    cursor.execute(
-        """
-        UPDATE orders
-        SET hours_since_payment = 72
-        WHERE order_id = 'A1001'
-        """
-    )
-
-    cursor.execute(
-        """
-        UPDATE orders
-        SET hours_since_payment = 30
-        WHERE order_id = 'A1002'
-        """
-    )
-
-    cursor.execute(
-        """
-        UPDATE orders
-        SET hours_since_payment = 96
-        WHERE order_id = 'A1003'
-        """
-    )
-
-    cursor.execute(
-        """
-        UPDATE orders
-        SET hours_since_payment = 60
-        WHERE order_id = 'A1004'
-         """
-)
 
     conn.commit()
     conn.close()
