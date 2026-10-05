@@ -2,6 +2,28 @@
 
 企业智能客服 Agent：结合 Tool Calling、RAG、确定性 Workflow、HITL、Observability 与 Multi-layer Eval，构建可控、可审计、可评估的客服自动化系统。
 
+## 复现来源与改进说明
+
+> **本仓库是学习目的的复现 + 改进项目。** 原始项目来自
+> [Chenmaolin-maker/supportpilot-agent](https://github.com/Chenmaolin-maker/supportpilot-agent)。
+> 上游仓库未附带开源许可证；本仓库的**新增与修改部分**以 MIT 发布（见 [`LICENSE`](LICENSE)），原作者代码的著作权归原作者所有。
+
+在复现基础上完成了 **14 项改进**，编号 `OPT-001` ~ `OPT-014`，完整登记见 [`innovation.md`](innovation.md)。
+
+| 分区 | 优化点 | 关键数字 |
+|---|---|---|
+| **A 检索质量** | `OPT-001`~`OPT-004`：检索阈值标定 / 难例集 / 标定工具链 / 标注自纠错 | `MAX_DISTANCE` **0.70 → 0.50**；域外漏过 **6/8 → 0/8**；域内误杀 **0/17** |
+| **B 生成质量** | `OPT-005`~`OPT-007`：生成层前提校验（Prompt 约束 + 确定性答后校验）/ 难例评测脚本 | 前提校验端到端 **检出 2/2、误报 0/12**（17 条单测）；错判用例检索距离 **0.4438**（检索正确，缺口在生成层） |
+| **C 工程与可观测** | `OPT-008`~`OPT-010`：只读查看器 / VSCode 配置 / 注释治理 | 注释改写覆盖 4 个文件，`instructions` 长度 **878 → 878（未变）** |
+| **D 后续改造** | `OPT-011`~`OPT-014`：对照集扩充 / 答案质量评测 / `trace_id` 链路追踪 / Prompt 外置 YAML | 对照集 **5 → 25 条**；Prompt 外置 **878 字节逐字节一致**；`trace_id` 串起 **4 个日志** |
+
+📖 **完整复盘与复现指南** → [`docs/OPTIMIZATION_GUIDE.md`](docs/OPTIMIZATION_GUIDE.md)
+🔁 **从零复现总纲** → [`docs/reproduction-roadmap.md`](docs/reproduction-roadmap.md)
+📊 **阈值标定实验证据** → [`docs/rag-threshold-calibration.md`](docs/rag-threshold-calibration.md)
+
+> **评测口径声明**：本仓库所有指标均为 **controlled smoke-test / regression** 结果，基于受控小样本（官方 25 条 + 难例 25 条 + 答案质量 7 条），**不代表生产准确率**。
+> `evals/eval_report.md` 中的 `Historical Failure Records` 是**本地累计的失败日志条数**，不是当前版本的失败数。
+
 ## Project Highlights
 
 ### 1. Agent Tool Calling
