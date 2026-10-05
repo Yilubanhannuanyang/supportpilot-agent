@@ -5,3 +5,4 @@ pytest
 chromadb
 sentence-transformers
 onnxruntime
+pyyaml
