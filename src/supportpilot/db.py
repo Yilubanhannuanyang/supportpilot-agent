@@ -1,8 +1,9 @@
 import sqlite3
 from pathlib import Path
 
-
+# 项目根目录：src/supportpilot/db.py -> parents[2]
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
+# 演示用 SQLite 文件，随首次运行自动创建
 DB_PATH = PROJECT_ROOT / "supportpilot.db"
 
 
@@ -12,16 +13,17 @@ def ensure_orders_schema(cursor: sqlite3.Cursor) -> None:
     cursor.execute(
         """
         CREATE TABLE IF NOT EXISTS orders (
-            order_id TEXT PRIMARY KEY,
-            customer_name TEXT,
-            product_name TEXT,
-            payment_status TEXT,
-            shipping_status TEXT,
-            estimated_delivery TEXT
+            order_id TEXT PRIMARY KEY, --订单号
+            customer_name TEXT, --客户名称
+            product_name TEXT, --产品名称
+            payment_status TEXT, --支付状态
+            shipping_status TEXT, --运输状态
+            estimated_delivery TEXT --预计送达时间
         )
         """
     )
 
+    # hours_since_payment 是后加的列，老库需要就地补上，避免手动删库重建。
     cursor.execute("PRAGMA table_info(orders)")
     columns = {row[1] for row in cursor.fetchall()}
 
@@ -40,11 +42,11 @@ def ensure_tickets_schema(cursor: sqlite3.Cursor) -> None:
     cursor.execute(
         """
         CREATE TABLE IF NOT EXISTS tickets (
-            ticket_id INTEGER PRIMARY KEY AUTOINCREMENT,
-            order_id TEXT NOT NULL,
-            issue_type TEXT NOT NULL,
-            description TEXT NOT NULL,
-            status TEXT NOT NULL
+            ticket_id INTEGER PRIMARY KEY AUTOINCREMENT, --工单ID
+            order_id TEXT NOT NULL, --订单号
+            issue_type TEXT NOT NULL, --问题类型
+            description TEXT NOT NULL, --问题描述
+            status TEXT NOT NULL --工单状态
         )
         """
     )
@@ -59,6 +61,7 @@ def init_db() -> None:
     ensure_orders_schema(cursor)
     ensure_tickets_schema(cursor)
 
+    # INSERT OR IGNORE 让初始化可重复执行：订单号已存在时跳过，不报错也不覆盖。
     cursor.executemany(
         """
         INSERT OR IGNORE INTO orders (
@@ -117,10 +120,11 @@ def init_db() -> None:
 
 
 def get_order_from_db(order_id: str) -> dict | None:
+    """按订单号查询订单信息；不存在时返回 None。"""
+
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
 
-          
     cursor.execute(
         """
         SELECT
@@ -136,7 +140,6 @@ def get_order_from_db(order_id: str) -> dict | None:
         """,
         (order_id,),
     )
-       
 
     row = cursor.fetchone()
     conn.close()
@@ -144,6 +147,7 @@ def get_order_from_db(order_id: str) -> dict | None:
     if row is None:
         return None
 
+    # 转成字典返回，便于工具层和模型直接按字段名读取。
     return {
         "order_id": row[0],
         "customer_name": row[1],
@@ -153,11 +157,15 @@ def get_order_from_db(order_id: str) -> dict | None:
         "estimated_delivery": row[5],
         "hours_since_payment": row[6],
     }
+
+
 def create_ticket_in_db(
     order_id: str,
     issue_type: str,
     description: str,
 ) -> int:
+    """插入一张工单并返回其自增主键。"""
+
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
 
@@ -179,13 +187,18 @@ def create_ticket_in_db(
         ),
     )
 
+    # lastrowid 是本次插入生成的自增 ID，供调用方后续引用这张工单。
     ticket_id = cursor.lastrowid
 
     conn.commit()
     conn.close()
 
     return ticket_id
+
+
 def get_ticket_from_db(ticket_id: int) -> dict | None:
+    """按工单 ID 查询工单信息；不存在时返回 None。"""
+
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
 
@@ -216,10 +229,14 @@ def get_ticket_from_db(ticket_id: int) -> dict | None:
         "description": row[3],
         "status": row[4],
     }
+
+
 def update_ticket_status_in_db(
     ticket_id: int,
     new_status: str,
 ) -> bool:
+    """更新工单状态；返回是否真的命中了记录。"""
+
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
 
@@ -235,21 +252,28 @@ def update_ticket_status_in_db(
         ),
     )
 
+    # rowcount > 0 表示确实改到了记录，否则说明工单不存在。
     updated = cursor.rowcount > 0
 
     conn.commit()
     conn.close()
 
     return updated
+
+
 def find_open_ticket_by_order_and_type(
     order_id: str,
     issue_type: str,
 ) -> dict | None:
-    """查找同一订单下尚未解决的同类型工单。"""
+    """查找同一订单下未解决的同类型工单。
+
+    用于幂等控制：命中时说明已有在办工单，不必重复创建。
+    """
 
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
 
+    # 排除「已解决」，并按工单 ID 倒序取最新的一条。
     cursor.execute(
         """
         SELECT
@@ -272,7 +296,6 @@ def find_open_ticket_by_order_and_type(
     )
 
     row = cursor.fetchone()
-
     conn.close()
 
     if row is None:
