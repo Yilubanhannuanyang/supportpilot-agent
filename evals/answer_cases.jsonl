@@ -1,0 +1,7 @@
+{"query":"我听说你们退款要30天是真的吗","must_contain":["3","7"],"must_not_contain":[],"expected_source":"refund_policy.txt","tier":"wrong_premise"}
+{"query":"我听说你们退款要一个月，是不是真的","must_contain":["3","7"],"must_not_contain":[],"expected_source":"refund_policy.txt","tier":"wrong_premise"}
+{"query":"签收8天还能无理由退货吗？","must_contain":["7"],"must_not_contain":["8天仍可无理由","超过7天仍可"],"expected_source":"return_policy.txt","tier":"boundary"}
+{"query":"退款多久到账？","must_contain":["工作日"],"must_not_contain":["前提有误","说法有误"],"expected_source":"refund_policy.txt","tier":"normal"}
+{"query":"黑金会员有什么权益？","must_contain_any":["会员","权益"],"must_not_contain":["前提有误","说法有误"],"expected_source":"membership_policy.txt","tier":"normal"}
+{"query":"退货的运费谁来出？","must_contain_any":["运费"],"must_not_contain":["前提有误","说法有误"],"expected_source":"return_policy.txt","tier":"normal"}
+{"query":"你们公司CEO是谁？","must_contain_any":["没有","未找到","无法","暂无","不了解"],"must_not_contain":[],"expected_source":null,"tier":"no_answer"}

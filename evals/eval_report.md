@@ -1,10 +1,10 @@
 # SupportPilot Evaluation Report
 
-- Generated at: `2026-09-09T19:08:34.783445`
+- Generated at: `2026-10-06T00:20:46.530348`
 - Overall Status: **PASS**
 - Release Gate: **READY**
 - Eval Suites Passed: **5/5**
-- Historical Failure Records: **0**
+- Historical Failure Records: **13**
 
 
 ## Release Gate
