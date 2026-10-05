@@ -8,6 +8,7 @@ from supportpilot.db import (
     find_open_ticket_by_order_and_type,
     get_order_from_db,
 )
+from supportpilot.observability.tracer import get_current_trace_id
 from supportpilot.rag.retriever import search_knowledge_base
 
 
@@ -69,6 +70,7 @@ def save_workflow_log(
 
     record = {
         "timestamp": datetime.now().isoformat(),
+        "trace_id": get_current_trace_id(),  # OPT-013：串起三个日志的链路 ID
         "workflow": "shipping_workflow",
         "order_id": state.order_id,
         "current_step": state.current_step,
