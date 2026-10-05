@@ -32,5 +32,5 @@ if __name__ == "__main__":
     print("\n第一个 Chunk：")
     print(chunks[0]["content"])
 
-    print("\n第一个 Embedding 前 10 个数字：")
-    print(embeddings[0][:10])
+    print("\n第一个 Embedding 前 15 个数字：")
+    print(embeddings[0][:15])

@@ -4,13 +4,15 @@ from pathlib import Path
 from chromadb.utils.embedding_functions import SentenceTransformerEmbeddingFunction
 import chromadb
 
+from supportpilot.observability.tracer import get_current_trace_id
+
 
 CHROMA_PATH = "data/chroma"
 COLLECTION_NAME = "supportpilot_knowledge"
 EMBEDDING_MODEL = "BAAI/bge-small-zh-v1.5"
 
 # distance 越小通常表示语义越相关
-MAX_DISTANCE = 0.7
+MAX_DISTANCE = 0.50
 
 # RAG 检索日志保存路径
 LOG_PATH = Path("data/logs/rag_retrieval.jsonl")
@@ -31,6 +33,7 @@ def log_retrieval(
 
     record = {
         "timestamp": datetime.now().isoformat(),
+        "trace_id": get_current_trace_id(),  # OPT-013：串起三个日志的链路 ID
         "query": query,
         "source": source,
         "distance": distance,
