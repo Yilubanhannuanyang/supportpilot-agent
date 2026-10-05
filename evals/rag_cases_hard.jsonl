@@ -1,0 +1,25 @@
+{"query":"退款多久到账","expected_source":"refund_policy.txt","tier":"in_domain_colloquial"}
+{"query":"钱什么时候退回来","expected_source":"refund_policy.txt","tier":"in_domain_colloquial"}
+{"query":"退货的运费谁来出","expected_source":"return_policy.txt","tier":"in_domain"}
+{"query":"我那个耳机不想要了还能退吗","expected_source":"return_policy.txt","tier":"in_domain_colloquial"}
+{"query":"签收8天还能无理由退货吗","expected_source":"return_policy.txt","tier":"in_domain_boundary"}
+{"query":"订单多久发货","expected_source":"shipping_policy.txt","tier":"in_domain"}
+{"query":"付款后一般几天发出","expected_source":"shipping_policy.txt","tier":"in_domain"}
+{"query":"黑金会员有什么权益","expected_source":"membership_policy.txt","tier":"in_domain"}
+{"query":"金卡有什么用","expected_source":"membership_policy.txt","tier":"in_domain_colloquial"}
+{"query":"你们公司创始人是谁？","expected_source":null,"tier":"out_business_like"}
+{"query":"你们公司股票代码是多少","expected_source":null,"tier":"out_business_like"}
+{"query":"你们CEO是谁","expected_source":null,"tier":"out_business_like"}
+{"query":"你们的竞品是哪家公司","expected_source":null,"tier":"out_business_like"}
+{"query":"北京到上海高铁要多久","expected_source":null,"tier":"out_irrelevant"}
+{"query":"帮我写一首关于春天的诗","expected_source":null,"tier":"out_irrelevant"}
+{"query":"苹果手机怎么关机","expected_source":null,"tier":"out_irrelevant"}
+{"query":"今天天气怎么样","expected_source":null,"tier":"out_irrelevant"}
+{"query":"我听说你们退款要30天是真的吗","expected_source":"refund_policy.txt","tier":"in_domain_wrong_premise"}
+{"query":"我订单 A1001 想退货，运费谁出？","expected_source":"return_policy.txt","tier":"in_domain_multi_intent"}
+{"query":"我买的会员退款是不是更快","expected_source":"refund_policy.txt","tier":"in_domain_multi_intent"}
+{"query":"退货","expected_source":"return_policy.txt","tier":"in_domain_short"}
+{"query":"退款","expected_source":"refund_policy.txt","tier":"in_domain_short"}
+{"query":"多久到","expected_source":"refund_policy.txt","tier":"in_domain_short"}
+{"query":"你们7天无理由，那我第8天退行不行？","expected_source":"return_policy.txt","tier":"in_domain_boundary"}
+{"query":"我听说你们退款要一个月，是不是真的","expected_source":"refund_policy.txt","tier":"in_domain_wrong_premise"}
