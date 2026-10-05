@@ -24,6 +24,17 @@ from supportpilot.db import (
     init_db,
     update_ticket_status_in_db,
 )
+from supportpilot.observability.tracer import (
+    get_current_trace_id,
+    new_trace_id,
+    set_current_trace_id,
+)
+from supportpilot.verification.fact_check import (
+    ENABLE_PREMISE_HINT,
+    check_premise,
+    format_premise_hint,
+    log_premise_conflict,
+)
 from supportpilot.workflows.shipping_workflow import (
     approve_shipping_ticket,
     reject_shipping_ticket,
@@ -184,6 +195,7 @@ def save_approval_log(
 
     record = {
         "timestamp": datetime.now().isoformat(),
+        "trace_id": get_current_trace_id(),  # OPT-013：串起三个日志的链路 ID
         "source": source,
         "action": action,
         "target_id": target_id,
@@ -453,6 +465,13 @@ async def main() -> None:
             print("SupportPilot 已退出。")
             break
 
+        # OPT-013：为本轮对话生成链路 ID。
+        # 放在路由之前，这样三条分支（/shipping 命令、Workflow、Agent）
+        # 写下的日志都会带上同一个 trace_id。
+        current_trace_id = new_trace_id()
+        set_current_trace_id(current_trace_id)
+        print(f"[trace_id] {current_trace_id}")
+
         # 开发测试命令
         # 示例：/shipping A1004
         if user_input.startswith(
@@ -545,6 +564,36 @@ async def main() -> None:
         approval_request = find_approval_request_from_run(
             result
         )
+
+        # 生成层前提校验（OPT-006）：
+        # 只在没有写操作审批请求时才跑。写操作优先级更高 —— 审批请求一旦检出，
+        # 就由审批流程接管文案，此时改写答案会让"审批界面显示的动作"与
+        # "最终答案"不一致。
+        if approval_request is None:
+            premise = check_premise(user_input, result)
+
+            if premise.unverified:
+                answer_before = answer
+
+                if ENABLE_PREMISE_HINT:
+                    answer = answer + format_premise_hint(
+                        premise.unverified
+                    )
+
+                log_premise_conflict(
+                    query=user_input,
+                    result=premise,
+                    answer_before=answer_before,
+                    answer_after=answer,
+                    mode="hint" if ENABLE_PREMISE_HINT else "log_only",
+                )
+
+                print()
+                print(
+                    f"[FactCheck] 用户提到的 {premise.unverified} "
+                    f"未在知识库原文中找到依据"
+                    f"（来源：{premise.kb_sources}）"
+                )
 
         if approval_request is not None:
             # 发现审批请求后，不直接展示模型改写后的文本。
