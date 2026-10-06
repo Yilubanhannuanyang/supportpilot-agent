@@ -6,12 +6,14 @@
 
 | 统计项 | 数量 |
 |---|---|
-| ✅ 已实现 | 14 |
+| ✅ 已实现 | 15 |
 | 🚧 进行中 | 0 |
 | 📋 计划中 | 0 |
-| **合计** | **14** |
+| **合计** | **15** |
 
-**状态截至**：2026-10-05
+**状态截至**：2026-10-06
+
+> 🚀 **仓库已上线**：<https://github.com/Yilubanhannuanyang/supportpilot-agent>（public · MIT · tag `v0.1.0`）
 
 ---
 
@@ -21,7 +23,7 @@
 |---|---|---|
 | **A. 检索质量** | RAG 召回与拒答、测试集、标定工具 | OPT-001 ~ OPT-004 |
 | **B. 生成质量** | 输出正确性、前提校验 | OPT-005 ~ OPT-007 |
-| **C. 工程与可观测** | 脚本可移植性、调试工具、开发体验 | OPT-008 ~ OPT-010 |
+| **C. 工程与可观测** | 脚本可移植性、调试工具、开发体验、发布基线 | OPT-008 ~ OPT-010、OPT-015 |
 | **D. 后续改造** | 评测补齐、可观测性、Prompt 资产化 | OPT-011 ~ OPT-014 |
 
 > 📌 **关于编号与分区的说明**：`OPT-NNN` 一旦分配**不再移动**（避免引用失效）。
@@ -222,6 +224,35 @@
 - **数据**：注释改写覆盖 4 个文件；`agent.py` 的 `instructions` 长度 **878 → 878（未变）**；5 个工具齐全；`db.py` 六个函数实测行为一致（`A1001` 命中、`A9999` 返回 `None`）
 - **价值一句话**：注释应该解释"为什么这么写"，而不是复述"这行在做什么"——这是代码可维护性的基本要求。
 - ✅ **上传前的评估结论**：采用方案 (a) 就地改写（只动注释、零功能风险），并保留 `agent.py` 末尾的「block id ↔ 防御目标」对照表作为设计说明。
+
+---
+
+### OPT-015 · 建立可安全公开的发布基线（密钥审计 + 忽略规则 + 首推）
+
+- **状态**：✅ 已实现（2026-10-06）
+- **层面**：工程层
+- **动机**：项目含真实 DeepSeek Key（`.env`）、本地 SQLite（`supportpilot.db`）与 946 KB 运行日志（`data/logs/`）。原项目 `.gitignore` 未覆盖这些，直接把仓库推公开是**不可逆的泄漏**——Secret 一旦进了 GitHub 历史，即使后续删除也会被爬虫收录。
+- **改动**：`.gitignore`（新增 4 类规则）、`LICENSE`（新增 MIT + 上游来源说明）、`README.md`（顶部加复现来源声明）、`docs/`（精简为 3 份面向读者的文档）
+- **方法**：分四步建立发布基线。
+  1. **忽略规则**：补 `.env` / `supportpilot.db` / `data/chroma/` / `data/logs/`；`.vscode` 用 `.vscode/*` + `!.vscode/settings.json` 白名单（**不能只写 `!.vscode/settings.json`**——父目录被排除后无法再单独包含子文件）。
+  2. **密钥审计**：用**精确正则**扫全历史，而非裸 `grep "sk-"`——后者会被文档里的占位符 `sk-xxx` 和"检查密钥"的命令示例命中，产生噪音。审计中确实查出 1 处真实 Key 前缀（在文档的"真实事故"示例里），已替换为占位符并用 `git commit --amend` 从历史移除（当时尚未推送）。
+  3. **许可证**：原项目**无 LICENSE**，直接复用会造成授权不清。新增 MIT 并保留原作者著作权声明。
+  4. **推送**：建**空**仓库（不勾 README/gitignore/license，否则首推报 `non-fast-forward`）→ `git push -u origin main`。
+- **验证**：
+  ```bash
+  # ① 全历史密钥审计（应 0 命中）
+  git log --all -p | grep -nE "sk-[A-Za-z0-9]{16,}"
+  # ② 确认敏感文件未被跟踪（应无输出）
+  git ls-files | grep -E "^(\.env|supportpilot\.db)$|^data/(logs|chroma)/"
+  # ③ 确认忽略规则生效（每条应打印 .gitignore 的命中行号）
+  git check-ignore -v .env supportpilot.db data/logs data/chroma
+  # ④ 核对远程与本地一致
+  git ls-remote origin
+  git rev-parse HEAD
+  ```
+- **数据**：推送 **23 个提交 / 62 个文件**（`.git` 仅 **683 KB**）；密钥审计 **0 命中**；4 类敏感路径全部被忽略；远程 `main` = 本地 HEAD = `ce1e052`；标签 `v0.1.0` 已推。
+  踩坑两条：① 本机 `git push` 的 **stdout 常被吞掉**（exit 0 却无输出，甚至被 SIGTERM 中断）→ 必须 `> file.log 2>&1` 重定向后读回，用 `git ls-remote origin` 验收；② 用 GitHub API 查 `size` 判断仓库是否为空**不可靠**（有 CDN 缓存，刚推完仍显示 0）→ 改用 `/branches/main` 端点核对 commit sha。
+- **价值一句话**：把仓库推公开前，密钥审计必须扫**全历史**而非工作区——历史里的 Secret 删掉文件也抹不掉。
 
 ---
 
