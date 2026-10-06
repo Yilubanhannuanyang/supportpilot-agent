@@ -98,7 +98,7 @@
 |---|---|---|
 | 环境搭建（Python / venv / API Key / 模型下载） | 已在复现总纲中详述，重复维护必然过时 | [`reproduction-roadmap.md`](reproduction-roadmap.md) |
 | 逐行源码讲解 | 代码里有解释"为什么"的注释 | 源码本身 |
-| 简历文案与面试话术 | 属于个人材料 | [`refactor-1-retrospective.md`](refactor-1-retrospective.md) |
+| 面试问答话术 | 候选人视角的回答参考 | [`optimization-retrospective.md`](optimization-retrospective.md) |
 | 未经验证的数字 | —— | **本指南不出现任何推测数据** |
 
 ---
@@ -267,8 +267,7 @@
 > ★ **这一条比数字本身更值钱**：`0.45` 从"零误杀"变成"误杀两条"，唯一的变量是**测试集变强了**。
 > **参数的余量是测试集给的，不是参数自带的 —— 用弱测试集定参数，等于用刻度不准的尺子量长度。**
 
-📄 完整实验数据与推导：[`rag-threshold-calibration.md`](rag-threshold-calibration.md)
-📄 面试追问预案（Q1~Q8）：[`refactor-1-retrospective.md`](refactor-1-retrospective.md)
+📄 常见追问参考（Q1~Q8）：[`optimization-retrospective.md`](optimization-retrospective.md)
 
 ---
 
@@ -379,7 +378,7 @@ Runner.run(agent, user_input)
 | 只覆盖数字类前提 | "你们是不是不支持退货"这类非数字错误前提拦不住 |
 | 与 `kb_tools.py` 输出格式强耦合 | 格式改动会静默失效 —— 已用单测锁死 |
 
-**本轮不做「自动重生成」** —— `should_regenerate()`（5 条件闸门）已实现但 `run.py` 不调用。理由：成本翻倍、重跑模型可能再次触发写操作（属写库级别的失败模式）、需改主循环最敏感的一段。**先用日志量化检出率与误报率，再决定是否加大干预**，比一上来就上重生成更稳妥。
+**当前版本不做「自动重生成」** —— `should_regenerate()`（5 条件闸门）已实现但 `run.py` 不调用。理由：成本翻倍、重跑模型可能再次触发写操作（属写库级别的失败模式）、需改主循环最敏感的一段。**先用日志量化检出率与误报率，再决定是否加大干预**，比一上来就上重生成更稳妥。
 
 ---
 
@@ -672,11 +671,7 @@ Release Gate: READY
 |---|---|---|
 | **本文件** `OPTIMIZATION_GUIDE.md` | 改进点索引 + 叙事 + 复现入口 | 开源读者 |
 | [`reproduction-roadmap.md`](reproduction-roadmap.md) | 从零复现总纲（含环境搭建） | 新人 |
-| [`rag-threshold-calibration.md`](rag-threshold-calibration.md) | 阈值标定实验证据（明细） | 想深究数据的人 |
-| [`refactor-1-retrospective.md`](refactor-1-retrospective.md) | 面试追问预案（Q1~Q8） | 准备面试的人 |
-| [`opt-011-014-plan.md`](opt-011-014-plan.md) | `OPT-011`~`014` 设计与执行记录 | 追溯过程 |
-| [`opt-011-014-steps.md`](opt-011-014-steps.md) | `OPT-011`~`014` 可复跑操作手册 | 想照着做一遍 |
-| [`post-optimization-and-release.md`](post-optimization-and-release.md) | 后续改造与上线过程方案 | 追溯过程 |
+| [`optimization-retrospective.md`](optimization-retrospective.md) | 改进过程复盘 + 常见追问（Q1~Q8） | 想了解推导过程的人 |
 | `innovation.md`（仓库根） | **唯一事实来源**，8 字段登记 | 自查 / 面试 |
 
 ### 10.4 许可与来源
